@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gelişmiş Banka Uygulaması</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            min-height: 200vh;
+            margin: 0;
+            background: linear-gradient(45deg, #007bff, #000);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: #fff;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            filter: blur(10px);
+            z-index: -1;
+        }
+
+        .bank-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 2s ease-out;
+        }
+
+        h1, h3 {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #000;
+            color: #fff;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #444;
+            transform: scale(1.1);
+        }
+
+        input {
+            margin: 10px 0;
+            padding: 10px;
+            width: calc(100% - 22px);
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #007bff;
+        }
+
+        /* Modal animasyonları */
+        @keyframes slideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #deposit-modal, #withdraw-modal, #transfer-modal {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #deposit-modal.show, #withdraw-modal.show, #transfer-modal.show {
+            display: block;
+            opacity: 1;
+            animation: slideIn 3s ease-out;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #auth-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .auth-btn {
+            margin: 0 10px;
+            transition: background 0.3s ease;
+        }
+
+        .auth-btn:hover {
+            background-color: #007bff;
+        }
+
+        #banking-buttons {
+            display: none;
+            animation: showButtons 3s ease-out;
+        }
+
+        @keyframes showButtons {
+            0% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bank-container">
+        <div id="auth-buttons">
+            <button id="register-btn" class="auth-btn">Kayıt Ol</button>
+            <button id="login-btn" class="auth-btn">Giriş Yap</button>
+        </div>
+
+        <div id="banking-buttons">
+            <h1>Gelişmiş Banka</h1>
+            <h3>Bakiye: <span id="balance" class="balance-amount">0</span> $</h3>
+
+            <button id="deposit">Para Yatır</button>
+            <button id="withdraw">Para Çek</button>
+            <button id="transfer">Para Transferi</button>
+            <button id="trade">Trade Yap</button>
+
+            <!-- Para yatırma modal -->
+            <div id="deposit-modal" class="hidden">
+                <h3>Para Yatırma İşlemi</h3>
+                <input type="text" id="deposit-full-name" placeholder="İsim Soyad" />
+                <input type="text" id="deposit-card-number" placeholder="Kart Numarası (16 hane)" />
+                <input type="text" id="deposit-cvv" placeholder="CVV (3 hane)" />
+                <input type="text" id="deposit-cvv2" placeholder="CVV2 (AY/YIL)" />
+                <input type="number" id="deposit-amount" placeholder="Yatırmak İstediğiniz Tutar" />
+                <button id="confirm-deposit">Onayla</button>
+            </div>
+
+            <!-- Para çekme modal -->
+            <div id="withdraw-modal" class="hidden">
+                <h3>Para Çekme İşlemi</h3>
+                <div id="withdraw-info" class="withdraw-info">
+                    <input type="text" id="withdraw-full-name" placeholder="İsim Soyad" />
+                    <input type="text" id="withdraw-card-number" placeholder="Kart Numarası (16 hane)" />
+                    <input type="text" id="withdraw-cvv" placeholder="CVV (3 hane)" />
+                    <input type="text" id="withdraw-cvv2" placeholder="CVV2 (AY/YIL)" />
+                </div>
+                <input type="number" id="withdraw-amount" placeholder="Çekmek İstediğiniz Tutar" />
+                <button id="confirm-withdraw">Onayla</button>
+            </div>
+
+            <!-- Para transferi modalı -->
+            <div id="transfer-modal" class="hidden">
+                <h3>Para Transferi</h3>
+                <input type="text" id="transfer-user-id" placeholder="Hedef Kullanıcı ID" />
+                <input type="number" id="transfer-amount" placeholder="Transfer Edilecek Tutar" />
+                <button id="confirm-transfer">Transfer Et</button>
+            </div>
+        </div>
+
+        <!-- Kayıt modalı -->
+        <div id="register-modal" class="hidden">
+            <h3>Kayıt Ol</h3>
+            <input type="text" id="register-username" placeholder="Kullanıcı Adı" />
+            <input type="password" id="register-password" placeholder="Şifre" />
+            <button id="confirm-register">Kayıt Ol</button>
+        </div>
+
+        <!-- Giriş modalı -->
+        <div id="login-modal" class="hidden">
+            <h3>Giriş Yap</h3>
+            <input type="text" id="login-username" placeholder="Kullanıcı Adı" />
+            <input type="password" id="login-password" placeholder="Şifre" />
+            <button id="confirm-login">Giriş Yap</button>
+        </div>
+    </div>
+
+    <script>
+        let balance = parseFloat(localStorage.getItem('balance')) || 0;
+        let userID = localStorage.getItem('userID') || null;
+        const balanceEl = document.getElementById('balance');
+        const depositButton = document.getElementById('deposit');
+        const withdrawButton = document.getElementById('withdraw');
+        const transferButton = document.getElementById('transfer');
+        const depositModal = document.getElementById('deposit-modal');
+        const withdrawModal = document.getElementById('withdraw-modal');
+        const transferModal = document.getElementById('transfer-modal');
+        const confirmDepositButton = document.getElementById('confirm-deposit');
+        const confirmWithdrawButton = document.getElementById('confirm-withdraw');
+        const confirmTransferButton = document.getElementById('confirm-transfer');
+        const depositAmountInput = document.getElementById('deposit-amount');
+        const withdrawAmountInput = document.getElementById('withdraw-amount');
+        const transferUserIdInput = document.getElementById('transfer-user-id');
+        const transferAmountInput = document.getElementById('transfer-amount');
+
+        const registerButton = document.getElementById('register-btn');
+        const loginButton = document.getElementById('login-btn');
+        const registerModal = document.getElementById('register-modal');
+        const loginModal = document.getElementById('login-modal');
+        const bankingButtons = document.getElementById('banking-buttons');
+        const authButtons = document.getElementById('auth-buttons');
+        
+        const confirmRegisterButton = document.getElementById('confirm-register');
+        const confirmLoginButton = document.getElementById('confirm-login');
+
+        let user = null;
+
+        function updateUI() {
+            balanceEl.textContent = balance.toFixed(2);
+            localStorage.setItem('balance', balance);
+        }
+
+        // Kullanıcı kayıt işlemi
+        confirmRegisterButton.addEventListener('click', () => {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+
+            if (username && password) {
+                const userID = 'user' + Math.floor(Math.random() * 1000000);  // Unique ID
+                localStorage.setItem('user', JSON.stringify({ username, password }));
+                localStorage.setItem('userID', userID);
+                alert('Kayıt başarılı!');
+                registerModal.classList.remove('show');
+                registerModal.classList.add('hidden');
+                authButtons.style.display = 'none';
+                bankingButtons.style.display = 'block';
+                updateUI();
+            } else {
+                alert('Lütfen tüm alanları doldurun!');
+            }
+        });
+
+        // Kullanıcı giriş işlemi
+        confirmLoginButton.addEventListener('click', () => {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            const storedUser = JSON.parse(localStorage.getItem('user'));
+
+            if (storedUser && storedUser.username === username && storedUser.password === password) {
+                user = storedUser;
+                userID = localStorage.getItem('userID');
+                alert('Giriş başarılı!');
+                loginModal.classList.remove('show');
+                loginModal.classList.add('hidden');
+                authButtons.style.display = 'none';
+                bankingButtons.style.display = 'block';
+                updateUI();
+            } else {
+                alert('Geçersiz kullanıcı adı veya şifre!');
+            }
+        });
+
+        // Kayıt ol butonuna tıklama
+        registerButton.addEventListener('click', () => {
+            registerModal.classList.remove('hidden');
+            registerModal.classList.add('show');
+        });
+
+        // Giriş yap butonuna tıklama
+        loginButton.addEventListener('click', () => {
+            loginModal.classList.remove('hidden');
+            loginModal.classList.add('show');
+        });
+
+        // Para Yatır butonuna tıklama olayı
+        depositButton.addEventListener('click', () => {
+            if (depositModal.classList.contains('hidden')) {
+                depositModal.classList.remove('hidden');
+                depositModal.classList.add('show');
+            } else {
+                depositModal.classList.remove('show');
+                depositModal.classList.add('hidden');
+            }
+        });
+
+        // Para Çek butonuna tıklama olayı
+        withdrawButton.addEventListener('click', () => {
+            if (withdrawModal.classList.contains('hidden')) {
+                withdrawModal.classList.remove('hidden');
+                withdrawModal.classList.add('show');
+            } else {
+                withdrawModal.classList.remove('show');
+                withdrawModal.classList.add('hidden');
+            }
+        });
+
+        // Para Transferi butonuna tıklama olayı
+        transferButton.addEventListener('click', () => {
+            if (transferModal.classList.contains('hidden')) {
+                transferModal.classList.remove('hidden');
+                transferModal.classList.add('show');
+            } else {
+                transferModal.classList.remove('show');
+                transferModal.classList.add('hidden');
+            }
+        });
+
+        // Para yatırma işlemini onaylama
+        confirmDepositButton.addEventListener('click', () => {
+            const depositAmount = parseFloat(depositAmountInput.value);
+
+            if (depositAmount > 0 && !isNaN(depositAmount)) {
+                balance += depositAmount;
+                updateUI();
+                alert(`+${depositAmount.toFixed(2)} $ başarıyla yatırıldı!`);
+                depositModal.classList.remove('show');
+                depositModal.classList.add('hidden');
+            } else {
+                alert('Geçersiz tutar.');
+            }
+        });
+
+        // Para çekme işlemini onaylama
+        confirmWithdrawButton.addEventListener('click', () => {
+            const withdrawAmount = parseFloat(withdrawAmountInput.value);
+
+            if (withdrawAmount > 0 && !isNaN(withdrawAmount) && withdrawAmount <= balance) {
+                balance -= withdrawAmount;
+                updateUI();
+                alert(`-${withdrawAmount.toFixed(2)} $ başarıyla çekildi!`);
+                withdrawModal.classList.remove('show');
+                withdrawModal.classList.add('hidden');
+            } else {
+                alert('Geçersiz tutar veya yetersiz bakiye.');
+            }
+        });
+
+        // Para transferi işlemi
+        confirmTransferButton.addEventListener('click', () => {
+            const transferAmount = parseFloat(transferAmountInput.value);
+            const transferUserId = transferUserIdInput.value;
+
+            if (transferAmount > 0 && !isNaN(transferAmount)) {
+                if (transferUserId && transferUserId !== userID) {
+                    balance -= transferAmount;
+                    updateUI();
+                    alert(`${transferAmount.toFixed(2)} $ başarıyla transfer edildi!`);
+                    transferModal.classList.remove('show');
+                    transferModal.classList.add('hidden');
+                } else {
+                    alert('Geçersiz hedef kullanıcı ID veya kendi ID\'nizi transfer edemezsiniz.');
+                }
+            } else {
+                alert('Geçersiz tutar.');
+            }
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>
